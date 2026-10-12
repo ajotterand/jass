@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#163A30">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jass">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23D52B1E'/%3E%3Cpath d='M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z' fill='%23fff'/%3E%3C/svg%3E">
+<title>Jass, le Chibre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt:#1F4B3F; --felt-hi:#2B6352; --edge:#163A30; --stitch:rgba(236,226,200,.42);
+  --slate:#2F3533; --chalk:#F2F0E7; --chalk-dim:#B4BAB1; --wood:#8B6A44;
+  --card:#FFFDF6; --ink:#1B1A18; --red:#C3122E; --back:#A8162B; --gold:#E2B23B; --swiss:#D52B1E;
+  --paper:#FAF7EF; --paper-ink:#1B1A18; --line:#E2DACA; --muted:#6A665D; --them:#8E2433; --us:#EFE4C8;
+  --ui:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --chalkfont:"Caveat","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --felt:#183E33; --felt-hi:#21503F; --edge:#0E2620; --stitch:rgba(236,226,200,.3);
+    --slate:#262B29; --wood:#5F4930; --card:#F5F0E2;
+    --paper:#20262A; --paper-ink:#EEEBE2; --line:#384046; --muted:#A3A89F; --us:#E6DAB9;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --felt:#183E33; --felt-hi:#21503F; --edge:#0E2620; --stitch:rgba(236,226,200,.3);
+  --slate:#262B29; --wood:#5F4930; --card:#F5F0E2;
+  --paper:#20262A; --paper-ink:#EEEBE2; --line:#384046; --muted:#A3A89F; --us:#E6DAB9;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;background:var(--edge)}
+body{margin:0;height:100%;background:var(--edge);color:var(--chalk);font-family:var(--ui);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.sv{width:1em;height:1em;fill:currentColor;display:inline-block;vertical-align:-.12em}
+
+#app{height:100%;display:flex;flex-direction:column;max-width:760px;margin:0 auto}
+
+/* ---- Ardoise ---- */
+.slate{margin:8px 10px 0;background:radial-gradient(120% 140% at 30% 20%,rgba(255,255,255,.07),transparent 60%),var(--slate);
+  border:5px solid var(--wood);border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.45),0 2px 0 rgba(0,0,0,.3);
+  display:grid;grid-template-columns:1fr 1fr auto;column-gap:14px;padding:6px 6px 7px 12px}
+.team{display:flex;flex-direction:column;min-width:0}
+.team .lab{font-size:12.5px;font-weight:600;color:var(--chalk-dim);display:flex;align-items:center;gap:6px}
+.team .lab i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.team.us .lab i{background:var(--us)} .team.them .lab i{background:#D9667A}
+.team .num{font-family:var(--chalkfont);font-weight:700;font-size:36px;line-height:.95;letter-spacing:.01em}
+.team .prog{height:3px;border-radius:3px;background:rgba(242,240,231,.12);margin-top:3px;overflow:hidden}
+.team .prog b{display:block;height:100%;width:0;background:var(--chalk);opacity:.75;transition:width .6s}
+.meta{grid-column:1/3;font-size:12.5px;color:var(--chalk-dim);margin-top:4px;display:flex;justify-content:space-between;gap:8px}
+.menu-btn{grid-row:1/3;grid-column:3;align-self:center;width:44px;height:44px;border-radius:10px;border:0;background:rgba(242,240,231,.08);color:var(--chalk);display:grid;place-items:center}
+.menu-btn svg{width:22px;height:22px}
+
+/* ---- Tapis ---- */
+.felt{position:relative;flex:1;min-height:0;margin:8px 10px 0;border-radius:26px 26px 0 0;display:flex;flex-direction:column;
+  background:
+   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E"),
+   radial-gradient(90% 70% at 50% 42%,var(--felt-hi),var(--felt) 72%);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
+.felt::before{content:"";position:absolute;inset:7px 7px 0;border:1.5px dashed var(--stitch);border-bottom:0;border-radius:20px 20px 0 0;pointer-events:none}
+.table{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.top{display:flex;justify-content:center;padding-top:16px}
+.mid{flex:1;min-height:0;display:grid;grid-template-columns:76px 1fr 76px;align-items:center}
+
+.seat{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-stretch:88%;font-size:15px;transition:box-shadow .2s}
+.seat.us .av{background:var(--us);color:#2A251C}
+.seat.them .av{background:var(--them);color:#F6E9EC}
+.seat.active .av{box-shadow:0 0 0 3px var(--felt),0 0 0 6px var(--gold)}
+.nm{font-size:12.5px;font-weight:600;line-height:1.15;max-width:76px}
+.nm small{display:block;font-weight:500;color:var(--chalk-dim);font-size:11px}
+.backs{display:flex;height:17px;padding-left:7px}
+.backs i{width:12px;height:17px;margin-left:-7px;border-radius:2px;border:1px solid rgba(255,253,246,.85);background:var(--back);
+  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 1px,transparent 1px 4px),repeating-linear-gradient(-45deg,rgba(255,255,255,.18) 0 1px,transparent 1px 4px)}
+
+.bub{position:absolute;z-index:30;white-space:nowrap;background:var(--card);color:var(--ink);font-weight:650;font-size:13.5px;padding:5px 10px;border-radius:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transform:translateY(4px) scale(.96);transition:opacity .18s,transform .18s;pointer-events:none}
+.bub.on{opacity:1;transform:none}
+.bub .sv{width:1.05em;height:1.05em}
+.bub .r,.toast .r{color:var(--red)}
+.toast .r{color:#FF8A9A}
+.seat.n .bub{top:100%;margin-top:4px}
+.seat.w .bub{left:60px;top:2px}
+.seat.e .bub{right:60px;top:2px}
+#bub0{left:50%;bottom:100%;transform:translate(-50%,4px)}
+#bub0.on{transform:translate(-50%,0)}
+
+/* ---- Pli ---- */
+.trick{position:relative;justify-self:center;--cw:var(--tw);width:calc(var(--tw)*2.45);height:calc(var(--tw)*1.45*1.95)}
+.slot{position:absolute}
+.s2{top:0;left:50%;transform:translateX(-50%) rotate(-3deg)}
+.s0{bottom:0;left:50%;transform:translateX(-50%) rotate(2deg)}
+.s3{left:0;top:50%;transform:translateY(-50%) rotate(-8deg)}
+.s1{right:0;top:50%;transform:translateY(-50%) rotate(7deg)}
+
+/* ---- Cartes ---- */
+.card{position:relative;display:block;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;background:var(--card);border-radius:calc(var(--cw)*.1);
+  border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 0 rgba(0,0,0,.2),0 3px 9px rgba(0,0,0,.28);overflow:hidden;font-family:var(--ui);text-align:left}
+.card.red{color:var(--red)} .card.blk{color:var(--ink)}
+.card .ix{position:absolute;top:5%;left:6%;width:calc(var(--cw)*.3);display:flex;flex-direction:column;align-items:center;line-height:.9}
+.card .ix b{font-weight:750;font-stretch:72%;font-size:calc(var(--cw)*.29);letter-spacing:-.03em}
+.card .ix .sv{width:calc(var(--cw)*.19);height:calc(var(--cw)*.19);margin-top:2px}
+.card .ctr{position:absolute;inset:20% 8% 12% 30%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.card .ctr .big{width:calc(var(--cw)*.5);height:calc(var(--cw)*.5)}
+.card .fl{font-weight:800;font-stretch:118%;font-size:calc(var(--cw)*.44);line-height:1}
+.card .fl+.big{width:calc(var(--cw)*.26);height:calc(var(--cw)*.26)}
+.card.trump{box-shadow:inset 4px 0 0 var(--gold),0 1px 0 rgba(0,0,0,.2),0 3px 9px rgba(0,0,0,.28)}
+.card .tag{position:absolute;left:6%;bottom:5%;font-size:calc(var(--cw)*.15);font-weight:700;color:#8C6A10;font-stretch:85%}
+.card.win{box-shadow:0 0 0 3px var(--gold),0 6px 16px rgba(0,0,0,.4)}
+
+/* ---- Barre et main ---- */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 16px 2px;min-height:34px}
+.modechip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--chalk);min-width:0}
+.modechip .ico{width:30px;height:30px;border-radius:50%;background:var(--card);display:grid;place-items:center;flex:none}
+.modechip .ico .sv{width:18px;height:18px}
+.modechip .ico.r{color:var(--red)} .modechip .ico.k{color:var(--ink)}
+.modechip .txt{line-height:1.15;min-width:0}
+.modechip .txt small{display:block;color:var(--chalk-dim);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi{font-weight:800;font-size:15px;color:var(--ink);font-stretch:90%;line-height:1;display:flex;align-items:baseline}
+.mi small{font-size:11px;margin-left:1px}
+.ghost{border:1px solid rgba(242,240,231,.28);background:transparent;color:var(--chalk);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.ghost:disabled{opacity:.35;cursor:default}
+
+.handzone{position:relative;padding:0 6px 10px}
+.hint{text-align:center;font-size:12.5px;font-weight:600;color:var(--gold);height:18px;opacity:0;transition:opacity .2s}
+.handzone.active .hint{opacity:1}
+.hand{display:flex;justify-content:center;padding-top:12px;min-height:calc(var(--cw)*1.45 + 12px)}
+.hand .card{margin-left:calc(var(--step) - var(--cw));transition:transform .16s ease,filter .16s ease;touch-action:manipulation}
+.hand .card:first-child{margin-left:0}
+.hand.myturn .card.ok{transform:translateY(-11px);cursor:pointer}
+.hand.myturn .card.no{filter:brightness(.6) saturate(.6)}
+.hand .card:focus-visible{outline:3px solid var(--gold);outline-offset:2px;z-index:5}
+
+/* ---- Choix de l'atout ---- */
+.choose{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,94%);z-index:25;background:var(--paper);color:var(--paper-ink);
+  border-radius:16px;padding:14px 14px 12px;box-shadow:0 14px 40px rgba(0,0,0,.45);display:none}
+.choose.on{display:block}
+.choose h3{margin:0 0 10px;font-size:16px;font-weight:700;font-stretch:92%}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opts.four{grid-template-columns:repeat(4,1fr)}
+.opt{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 2px 8px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--paper-ink);position:relative}
+.opt .sv{width:26px;height:26px}
+.opt.r .sv{color:var(--red)}
+.opt .mi{font-size:22px;color:var(--paper-ink);height:26px;align-items:center}
+.opt b{font-size:13px;font-weight:650}
+.opt small{font-size:11px;color:var(--muted)}
+.opt.sug,.chibre.sug{box-shadow:0 0 0 2.5px var(--gold) inset}
+.chibre{width:100%;margin-top:9px;background:var(--swiss);color:#fff;border:0;border-radius:11px;padding:11px;font-weight:700}
+.chibre small{font-weight:500;opacity:.85}
+.advice{display:block;margin:9px auto 0;background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:3px}
+
+/* ---- Messages ---- */
+.toast{position:absolute;top:10px;left:50%;transform:translate(-50%,-6px);z-index:40;max-width:90%;width:max-content;background:rgba(14,32,26,.94);color:var(--chalk);
+  border:1px solid rgba(242,240,231,.18);font-size:13.5px;font-weight:550;padding:8px 13px;border-radius:12px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---- Fenêtres ---- */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(6,18,14,.58);display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.panel{width:min(520px,100%);max-height:90%;overflow:auto;background:var(--paper);color:var(--paper-ink);border-radius:20px 20px 0 0;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.35)}
+@media (min-width:640px){.modal{align-items:center}.panel{border-radius:20px;padding-bottom:20px}}
+.panel h2{margin:0 0 4px;font-size:22px;font-weight:750;font-stretch:92%;letter-spacing:-.01em}
+.panel h3{margin:18px 0 6px;font-size:15px;font-weight:700}
+.intro h3{margin:14px 0 4px;font-size:14px}
+.intro .note{margin:5px 0 0}
+.panel p{margin:6px 0;max-width:62ch}
+.panel .sub{color:var(--muted);font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.panel .sub .sv{width:15px;height:15px}
+.panel .sub .r{color:var(--red)}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:13px;font-weight:700;font-size:15.5px;margin-top:10px}
+.btn.primary{background:var(--swiss);color:#fff}
+.btn.second{background:transparent;color:var(--paper-ink);border:1px solid var(--line)}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:13.5px;padding:8px 0}
+table.sc{width:100%;border-collapse:collapse;margin-top:12px;font-variant-numeric:tabular-nums}
+table.sc th,table.sc td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right;font-size:14px}
+table.sc th:first-child,table.sc td:first-child{text-align:left;color:var(--muted);font-weight:500}
+table.sc th{font-weight:700;font-size:13px}
+table.sc tr.tot td{font-weight:750;color:var(--paper-ink);font-size:15.5px;border-bottom:0}
+table.sc tr.cum td{font-weight:600}
+table.sc td small{color:var(--muted);font-size:11.5px}
+.seg{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:6px}
+.seg button{flex:1;border:0;background:transparent;color:var(--paper-ink);padding:9px 4px;font-size:13.5px;font-weight:600}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--paper-ink);color:var(--paper)}
+.note{font-size:12.5px;color:var(--muted)}
+.rules p,.rules li{font-size:14px}
+.rules ul{padding-left:18px;margin:6px 0}
+.rules .sv{width:14px;height:14px}
+.rules .r{color:var(--red)}
+.vals{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;font-size:12.5px;text-align:center;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.vals span{padding:4px 0;border-radius:6px;background:rgba(127,127,127,.1)}
+.vals span.h{font-weight:700;background:transparent}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;--cw:min(64px,19vw)}
+.mini figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.mini figcaption{font-size:12px;color:var(--muted);text-align:center}
+.mini figure.w figcaption{color:var(--paper-ink);font-weight:700}
+.hero{font-weight:800;font-stretch:125%;font-size:64px;line-height:.9;letter-spacing:-.02em;margin:4px 0 6px;display:flex;align-items:center;gap:12px}
+.hero .cross{width:40px;height:40px;border-radius:8px;background:var(--swiss);position:relative;flex:none}
+.hero .cross::before,.hero .cross::after{content:"";position:absolute;background:#fff;left:50%;top:50%;transform:translate(-50%,-50%)}
+.hero .cross::before{width:62%;height:20%}.hero .cross::after{width:20%;height:62%}
+.stats{font-size:12.5px;color:var(--muted);margin-top:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-height:640px){.top{padding-top:10px}.slate .num{font-size:30px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="suit0" viewBox="0 0 100 100"><path d="M50 4C60 24 94 38 94 61c0 15-11 25-23 25-9 0-15-4-19-10 1 9 5 16 14 20H34c9-4 13-11 14-20-4 6-10 10-19 10C17 86 6 76 6 61 6 38 40 24 50 4z"/></symbol>
+  <symbol id="suit1" viewBox="0 0 100 100"><path d="M50 90C21 67 4 50 4 31 4 16 15 6 29 6c10 0 17 6 21 14 4-8 11-14 21-14 14 0 25 10 25 25 0 19-17 36-46 59z"/></symbol>
+  <symbol id="suit2" viewBox="0 0 100 100"><path d="M50 3l38 47-38 47-38-47z"/></symbol>
+  <symbol id="suit3" viewBox="0 0 100 100"><circle cx="50" cy="27" r="20"/><circle cx="27" cy="57" r="20"/><circle cx="73" cy="57" r="20"/><path d="M45 52h10c0 20 4 32 14 44H31c10-12 14-24 14-44z"/></symbol>
+</svg>
+
+<div id="app">
+  <header class="slate" aria-label="Score">
+    <div class="team us"><span class="lab"><i></i>Nous</span><span class="num" id="sc0">0</span><span class="prog"><b id="pb0"></b></span></div>
+    <div class="team them"><span class="lab"><i></i>Eux</span><span class="num" id="sc1">0</span><span class="prog"><b id="pb1"></b></span></div>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="meta"><span id="metaL">Prêt à distribuer</span><span id="metaR"></span></div>
+  </header>
+
+  <main class="felt">
+    <div class="table" id="table">
+      <div class="top"><div class="seat n us" id="seat2"></div></div>
+      <div class="mid">
+        <div class="seat w them" id="seat3"></div>
+        <div class="trick" id="trick" aria-label="Pli en cours"><div class="slot s2"></div><div class="slot s3"></div><div class="slot s1"></div><div class="slot s0"></div></div>
+        <div class="seat e them" id="seat1"></div>
+      </div>
+      <div class="choose" id="choose" role="dialog" aria-label="Choix de l'atout"></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <div class="bar">
+      <div class="modechip" id="modechip"></div>
+      <button class="ghost" id="lastBtn" disabled>Dernier pli</button>
+    </div>
+    <div class="handzone" id="handzone">
+      <div class="bub" id="bub0"></div>
+      <div class="hint" id="hint">À vous de jouer</div>
+      <div class="hand" id="hand" aria-label="Votre main"></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal" id="modal"><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+
+<script>
+// ===== Moteur Jass / Chibre =====
+// Cartes 0..35 : couleur = c/9 (0 ♠, 1 ♥, 2 ♦, 3 ♣), rang = c%9 (0:6 1:7 2:8 3:9 4:10 5:V 6:D 7:R 8:A)
+// Modes : 0..3 = atout dans la couleur, 4 = Obenabe (l'As commande), 5 = Undenufe (le 6 commande)
+const J = (() => {
+  const S = c => (c / 9) | 0, R = c => c % 9;
+  const TO = [0, 1, 2, 7, 3, 8, 4, 5, 6]; // ordre à l'atout : 6 7 8 10 D R A Nell Bour
+  const PT = [
+    [0, 0, 0, 14, 10, 20, 3, 4, 11], // atout
+    [0, 0, 0, 0, 10, 2, 3, 4, 11],   // couleur ordinaire
+    [0, 0, 8, 0, 10, 2, 3, 4, 11],   // Obenabe
+    [11, 0, 8, 0, 10, 2, 3, 4, 0],   // Undenufe
+  ];
+  const pts = (c, m) => m === 4 ? PT[2][R(c)] : m === 5 ? PT[3][R(c)] : (S(c) === m ? PT[0][R(c)] : PT[1][R(c)]);
+  const isT = (c, m) => m < 4 && S(c) === m;
+  // rang dans sa propre couleur (atouts > 100)
+  const rk = (c, m) => isT(c, m) ? 100 + TO[R(c)] : (m === 5 ? 8 - R(c) : R(c));
+  // force dans un pli dont la couleur demandée est L (-1 si sans valeur)
+  const str = (c, m, L) => isT(c, m) ? 100 + TO[R(c)] : (S(c) !== L ? -1 : (m === 5 ? 8 - R(c) : R(c)));
+
+  function winnerIdx(cards, m) {
+    const L = S(cards[0]); let bi = 0, bs = str(cards[0], m, L);
+    for (let i = 1; i < cards.length; i++) { const s = str(cards[i], m, L); if (s > bs) { bs = s; bi = i; } }
+    return bi;
+  }
+
+  function legal(hand, trick, m) {
+    if (!trick.length) return hand.slice();
+    const L = S(trick[0]);
+    if (m >= 4) { const f = hand.filter(c => S(c) === L); return f.length ? f : hand.slice(); }
+    const bour = m * 9 + 5;
+    if (L === m) {
+      // atout demandé : obligation de servir, sauf si le Bour est le seul atout
+      const t = hand.filter(c => S(c) === m && c !== bour);
+      return t.length ? hand.filter(c => S(c) === m) : hand.slice();
+    }
+    let ht = -1;
+    for (const c of trick) if (S(c) === m) ht = Math.max(ht, TO[R(c)]);
+    const under = c => S(c) === m && ht >= 0 && TO[R(c)] < ht; // sous-couper
+    if (hand.some(c => S(c) === L)) return hand.filter(c => S(c) === L || (S(c) === m && !under(c)));
+    if (hand.every(c => S(c) === m)) return hand.slice();
+    return hand.filter(c => !under(c));
+  }
+
+  // ---- Annonces (Weis) ----
+  const SEQ = [0, 0, 0, 20, 50, 100, 150, 200, 250, 300];
+  function findWeis(hand) {
+    const res = [];
+    for (let s = 0; s < 4; s++) {
+      const has = Array(9).fill(false);
+      for (const c of hand) if (S(c) === s) has[R(c)] = true;
+      let r = 0;
+      while (r < 9) {
+        if (!has[r]) { r++; continue; }
+        let e = r; while (e + 1 < 9 && has[e + 1]) e++;
+        const len = e - r + 1;
+        if (len >= 3) { const cards = []; for (let k = r; k <= e; k++) cards.push(s * 9 + k); res.push({ type: 'seq', suit: s, lo: r, hi: e, len, pts: SEQ[len], cards }); }
+        r = e + 1;
+      }
+    }
+    for (const r of [3, 4, 5, 6, 7, 8]) {
+      if (hand.filter(c => R(c) === r).length === 4) res.push({ type: 'four', rank: r, len: 4, pts: r === 5 ? 200 : r === 3 ? 150 : 100, cards: [r, 9 + r, 18 + r, 27 + r] });
+    }
+    return res;
+  }
+  function weisKey(w, m) {
+    const h = w.type === 'seq' ? (m === 5 ? 8 - w.lo : w.hi) : (m === 5 ? 8 - w.rank : w.rank);
+    return [w.pts, w.len, h, (w.type === 'seq' && m < 4 && w.suit === m) ? 1 : 0];
+  }
+  const cmpKey = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
+  // Renvoie {team, total:[a,b], perPlayer} : seule l'équipe avec la meilleure annonce marque.
+  function resolveWeis(hands, m, leader) {
+    const per = hands.map(h => findWeis(h));
+    let best = null, bestP = -1, bestOrder = 9;
+    for (let p = 0; p < 4; p++) {
+      const order = (p - leader + 4) % 4;
+      for (const w of per[p]) {
+        const k = weisKey(w, m);
+        const c = best ? cmpKey(k, best) : 1;
+        if (c > 0 || (c === 0 && order < bestOrder)) { best = k; bestP = p; bestOrder = order; }
+      }
+    }
+    const total = [0, 0];
+    if (bestP >= 0) { const t = bestP % 2; for (const p of [t, t + 2]) for (const w of per[p]) total[t] += w.pts; }
+    return { team: bestP >= 0 ? bestP % 2 : -1, total, per };
+  }
+  function stockHolder(hands, m) {
+    if (m >= 4) return -1;
+    const k = m * 9 + 7, q = m * 9 + 6;
+    for (let p = 0; p < 4; p++) if (hands[p].includes(k) && hands[p].includes(q)) return p;
+    return -1;
+  }
+
+  // ---- Hasard ----
+  function shuffle(a, rnd = Math.random) { for (let i = a.length - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function deal(rnd = Math.random) { const d = shuffle([...Array(36).keys()], rnd); return [0, 1, 2, 3].map(p => d.slice(p * 9, p * 9 + 9)); }
+
+  // ---- Politique gloutonne (sert à l'IA détendue et aux simulations) ----
+  const minBy = (a, f) => { let b = a[0], bv = f(a[0]); for (let i = 1; i < a.length; i++) { const v = f(a[i]); if (v < bv) { bv = v; b = a[i]; } } return b; };
+  const maxBy = (a, f) => minBy(a, c => -f(c));
+
+  function greedy(lm, ctx) {
+    if (lm.length === 1) return lm[0];
+    const m = ctx.mode, me = ctx.me, team = me % 2, T = c => isT(c, m);
+    const trick = ctx.trick;
+    if (!trick.length) {
+      if (m < 4) {
+        const trumps = lm.filter(T);
+        if (trumps.length && ctx.decl === team) {
+          const top = maxBy(trumps, c => rk(c, m));
+          if (ctx.isMaster(top) && ctx.oppTrump() > 0.3) return top;
+          if (trumps.length >= 4 && ctx.oppTrump() > 0.5 && ctx.trickNo < 3) return minBy(trumps, c => rk(c, m));
+        }
+      }
+      const masters = lm.filter(c => !T(c) && ctx.isMaster(c) && ctx.trumpRisk(S(c)) < 0.35);
+      if (masters.length) return maxBy(masters, c => pts(c, m) * 2 + rk(c, m));
+      const sig = ctx.partnerSignal ? ctx.partnerSignal() : -1;
+      if (sig >= 0) { const inSig = lm.filter(c => S(c) === sig && !T(c)); if (inSig.length) return minBy(inSig, c => pts(c, m) * 3 + rk(c, m)); }
+      const nonT = lm.filter(c => !T(c));
+      const pool = nonT.length ? nonT : lm;
+      return minBy(pool, c => {
+        const len = ctx.hand.filter(x => S(x) === S(c)).length;
+        const guardedTen = (pts(c, m) >= 10 && len === 1) ? 10 : 0;
+        return pts(c, m) * 3 + rk(c, m) - len * 1.5 + guardedTen;
+      });
+    }
+    const L = S(trick[0]);
+    const wi = winnerIdx(trick, m), wp = ctx.tp[wi], wc = trick[wi], ws = str(wc, m, L);
+    const pos = trick.length;
+    const laterOpps = [];
+    for (let k = 1; k < 4 - pos; k++) { const q = (me + k) % 4; if (q % 2 !== team) laterOpps.push(q); }
+    let trickPts = 0; for (const c of trick) trickPts += pts(c, m);
+    const lastTrick = ctx.trickNo === 8;
+    if (lastTrick) trickPts += 5;
+    const giveCost = c => pts(c, m) * 4 + (T(c) ? 30 + (rk(c, m) - 100) * 2 : rk(c, m));
+    if (wp % 2 === team) {
+      const r = laterOpps.length ? ctx.risk(wc, L, laterOpps) : 0;
+      if (r < 0.3) {
+        return maxBy(lm, c => {
+          let v = pts(c, m) * 4 - (T(c) ? 60 : 0) - rk(c, m) * 0.1;
+          if (!T(c) && pts(c, m) >= 10 && ctx.isMaster(c) && !lastTrick) v -= 30;
+          return v;
+        });
+      }
+      return minBy(lm, c => giveCost(c) + (ctx.isMaster(c) ? 12 : 0));
+    }
+    let best = null, bc = 1e9;
+    for (const c of lm) {
+      if (str(c, m, L) <= ws) continue;
+      const r = laterOpps.length ? ctx.risk(c, L, laterOpps) : 0;
+      if (r > 0.4) continue;
+      if (T(c) && L !== m && trickPts + pts(c, m) < 10 && !lastTrick && pos < 3) continue;
+      let cost = T(c) ? 50 + (rk(c, m) - 100) * 3 : rk(c, m);
+      if (pos === 3 || r < 0.05) cost -= pts(c, m) * 0.8;
+      if (cost < bc) { bc = cost; best = c; }
+    }
+    if (best !== null) return best;
+    return minBy(lm, c => giveCost(c) + (ctx.isMaster(c) ? 12 : 0));
+  }
+
+  // Contexte à information parfaite (simulations) : owner[c] = joueur qui tient c, -1 si jouée
+  function perfectCtx(st, me) {
+    const m = st.mode, owner = st.owner, team = me % 2;
+    const holds = (q, c) => owner[c] === q;
+    return {
+      mode: m, me, hand: st.hands[me], trick: st.trick, tp: st.tp, decl: st.decl, trickNo: st.trickNo,
+      isMaster(c) {
+        const s = S(c), r = rk(c, m);
+        for (let k = 0; k < 9; k++) { const x = s * 9 + k; const o = owner[x]; if (o >= 0 && o !== me && rk(x, m) > r) return false; }
+        return true;
+      },
+      oppTrump() {
+        if (m >= 4) return 0;
+        for (let k = 0; k < 9; k++) { const o = owner[m * 9 + k]; if (o >= 0 && o % 2 !== team) return 1; }
+        return 0;
+      },
+      trumpRisk(s) {
+        if (m >= 4 || s === m) return 0;
+        for (const q of [(me + 1) % 4, (me + 3) % 4]) {
+          let hasS = false, hasT = false;
+          for (let k = 0; k < 9; k++) { if (owner[s * 9 + k] === q) hasS = true; if (owner[m * 9 + k] === q) hasT = true; }
+          if (!hasS && hasT) return 1;
+        }
+        return 0;
+      },
+      risk(wc, L, opps) {
+        const ws = str(wc, m, L);
+        for (const q of opps) for (let x = 0; x < 36; x++) if (owner[x] === q && str(x, m, L) > ws) return 1;
+        return 0;
+      },
+    };
+  }
+
+  // Contexte à information imparfaite (ce qu'un joueur sait vraiment)
+  // know = {played:Set, voids:[[...4]x4] (true ou 'b' = sans atout sauf peut-être le Bour), sizes:[n0..n3]}
+  function imperfectCtx(g, me) {
+    const m = g.mode, team = me % 2, hand = g.hands[me];
+    const mine = new Set(hand);
+    const unseen = [];
+    for (let c = 0; c < 36; c++) if (!mine.has(c) && !g.played.has(c)) unseen.push(c);
+    const bour = m < 4 ? m * 9 + 5 : -1;
+    const may = (q, c) => {
+      if (q === me) return mine.has(c);
+      if (mine.has(c) || g.played.has(c)) return false;
+      const v = g.voids[q][S(c)];
+      if (v === true) return false;
+      if (v === 'b') return c === bour;
+      return true;
+    };
+    const pool = q => unseen.filter(c => may(q, c));
+    const pAny = (q, pred) => {
+      const N = pool(q); const n = g.sizes[q]; if (!n || !N.length) return 0;
+      const k = N.filter(pred).length; if (!k) return 0;
+      if (k >= N.length) return 1;
+      // hypergéométrique : 1 - C(N-k,n)/C(N,n)
+      let p = 1; for (let i = 0; i < n; i++) p *= Math.max(0, (N.length - k - i)) / (N.length - i);
+      return 1 - p;
+    };
+    return {
+      mode: m, me, hand, trick: g.trick, tp: g.tp, decl: g.decl, trickNo: g.trickNo, may,
+      partnerSignal() { return partnerSignal(g, me); },
+      isMaster(c) {
+        const s = S(c), r = rk(c, m);
+        for (const x of unseen) if (S(x) === s && rk(x, m) > r) return false;
+        return true;
+      },
+      oppTrump() {
+        if (m >= 4) return 0;
+        let p = 1; for (const q of [(me + 1) % 4, (me + 3) % 4]) p *= 1 - pAny(q, c => S(c) === m);
+        return 1 - p;
+      },
+      trumpRisk(s) {
+        if (m >= 4 || s === m) return 0;
+        let p = 1;
+        for (const q of [(me + 1) % 4, (me + 3) % 4]) {
+          const pv = g.voids[q][s] === true ? 1 : 1 - pAny(q, c => S(c) === s);
+          p *= 1 - pv * pAny(q, c => S(c) === m);
+        }
+        return 1 - p;
+      },
+      risk(wc, L, opps) {
+        const ws = str(wc, m, L);
+        let p = 1;
+        for (const q of opps) {
+          const higherSuit = pAny(q, c => S(c) === L && !isT(c, m) && str(c, m, L) > ws);
+          let viaTrump = 0;
+          if (m < 4 && L !== m) {
+            const pv = g.voids[q][L] === true ? 1 : 1 - pAny(q, c => S(c) === L);
+            viaTrump = pv * pAny(q, c => isT(c, m) && str(c, m, L) > ws);
+          } else if (m < 4 && L === m) {
+            viaTrump = pAny(q, c => isT(c, m) && str(c, m, L) > ws);
+          }
+          p *= (1 - higherSuit) * (1 - viaTrump);
+        }
+        return 1 - p;
+      },
+    };
+  }
+
+  // ---- Signaux entre partenaires ----
+  // Un « signal » = le premier petit écart d'un joueur (carte hors atout, hors couleur demandée,
+  // parmi les quatre plus faibles de sa couleur). Direct : la couleur de la carte ; indirect : l'autre couleur de même teinte.
+  const PAIR = [3, 2, 1, 0]; // ♠↔♣, ♥↔♦
+  const CFG = { forceP: 1, avoidFalse: true };
+  function signalOf(g, p, c, conv) {
+    if (!conv || conv === 'off' || g.signalDone[p] || !g.trick.length) return -1;
+    const m = g.mode, L = S(g.trick[0]);
+    if (S(c) === L || isT(c, m) || rk(c, m) > 3) return -1;
+    const s = conv === 'direct' ? S(c) : PAIR[S(c)];
+    return (m < 4 && s === m) ? -1 : s;
+  }
+  function partnerSignal(g, me) {
+    if (!g.signals) return -1;
+    const q = (me + 2) % 4, s = g.signals[q];
+    if (s < 0 || (g.mode < 4 && s === g.mode) || g.voids[q][s] === true) return -1;
+    return s;
+  }
+  // Meilleure couleur annexe : celle où l'on tient les cartes maîtresses
+  function strongSuit(g, me) {
+    const m = g.mode, hand = g.hands[me], mine = new Set(hand);
+    let best = -1, bv = 0;
+    for (let s = 0; s < 4; s++) {
+      if (m < 4 && s === m) continue;
+      const my = hand.filter(c => S(c) === s).sort((a, b) => rk(b, m) - rk(a, m));
+      if (!my.length) continue;
+      const others = []; for (let k = 0; k < 9; k++) { const x = s * 9 + k; if (!mine.has(x) && !g.played.has(x)) others.push(rk(x, m)); }
+      const top = others.length ? Math.max(...others) : -1;
+      let k = 0, rest = others.slice().sort((a, b) => b - a);
+      for (const c of my) { if (rk(c, m) > (rest[0] ?? -1)) { k++; } else break; }
+      const v = k * 10 + my.length;
+      if (k >= 1 && v > bv) { bv = v; best = s; }
+      void top;
+    }
+    return best;
+  }
+  // Si l'IA s'apprête à faire un petit écart, elle choisit plutôt la carte qui signale sa bonne couleur
+  function applySignal(g, me, c, conv) {
+    if (!conv || conv === 'off' || g.signalDone[me] || !g.trick.length) return c;
+    const m = g.mode, L = S(g.trick[0]), hand = g.hands[me];
+    if (hand.some(x => S(x) === L)) return c;
+    if (isT(c, m) || rk(c, m) > 3) return c;
+    const strong = strongSuit(g, me);
+    if (strong < 0) {
+      if (!CFG.avoidFalse) return c;
+      const lm0 = legal(hand, g.trick, m);
+      const neutral = lm0.filter(x => !isT(x, m) && S(x) !== L && (rk(x, m) > 3 && pts(x, m) <= 4 || (() => { const s2 = conv === 'direct' ? S(x) : PAIR[S(x)]; return s2 === L || (m < 4 && s2 === m); })()));
+      return neutral.length ? minBy(neutral, x => pts(x, m) * 10 + rk(x, m)) : c;
+    }
+    const sigSuit = conv === 'direct' ? strong : PAIR[strong];
+    if (m < 4 && sigSuit === m) return c;
+    const lm = legal(hand, g.trick, m);
+    const cands = lm.filter(x => S(x) === sigSuit && !isT(x, m) && rk(x, m) <= 3);
+    if (!cands.length) return c;
+    if (conv === 'direct' && hand.filter(x => S(x) === strong).length < 2) return c;
+    return minBy(cands, x => pts(x, m) * 10 + rk(x, m));
+  }
+
+  // ---- Simulation ----
+  function simState(hands, mode, decl, next, trick = [], tp = [], trickNo = 0, ptsArr = [0, 0], tricks = [0, 0]) {
+    const owner = Array(36).fill(-1);
+    hands.forEach((h, p) => h.forEach(c => owner[c] = p));
+    return { hands: hands.map(h => h.slice()), owner, mode, decl, next, trick: trick.slice(), tp: tp.slice(), trickNo, pts: ptsArr.slice(), tricks: tricks.slice() };
+  }
+  function simPlay(st, c) {
+    const p = st.next, h = st.hands[p];
+    h.splice(h.indexOf(c), 1); st.owner[c] = -1;
+    st.trick.push(c); st.tp.push(p);
+    if (st.trick.length === 4) {
+      const w = st.tp[winnerIdx(st.trick, st.mode)];
+      let sum = 0; for (const x of st.trick) sum += pts(x, st.mode);
+      st.trickNo++; if (st.trickNo === 9) sum += 5;
+      st.pts[w % 2] += sum; st.tricks[w % 2]++;
+      st.trick = []; st.tp = []; st.next = w;
+    } else st.next = (p + 1) % 4;
+  }
+  function simFinish(st) {
+    while (st.trickNo < 9) {
+      const p = st.next;
+      const lm = legal(st.hands[p], st.trick, st.mode);
+      simPlay(st, greedy(lm, perfectCtx(st, p)));
+    }
+    const res = st.pts.slice();
+    for (const t of [0, 1]) if (st.tricks[t] === 9) res[t] += 100;
+    return res;
+  }
+
+  // Tirage d'un monde compatible avec ce que sait le joueur `me`
+  function sampleWorld(g, me, rnd = Math.random) {
+    const mine = new Set(g.hands[me]);
+    const unseen = [];
+    for (let c = 0; c < 36; c++) if (!mine.has(c) && !g.played.has(c)) unseen.push(c);
+    const m = g.mode, bour = m < 4 ? m * 9 + 5 : -1;
+    const ok = (q, c) => { const v = g.voids[q][S(c)]; return v === true ? false : v === 'b' ? c === bour : true; };
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const hands = [[], [], [], []]; hands[me] = g.hands[me].slice();
+      const cards = shuffle(unseen.slice(), rnd);
+      const elig = new Map(cards.map(c => [c, [0, 1, 2, 3].filter(q => q !== me && ok(q, c))]));
+      cards.sort((a, b) => elig.get(a).length - elig.get(b).length);
+      const cap = g.sizes.slice(); cap[me] = 0;
+      let fail = false;
+      const sig = partnerSignal(g, me), q = (me + 2) % 4;
+      if (sig >= 0 && attempt < 30 && rnd() < CFG.forceP) {
+        let top = -1; for (const c of unseen) if (S(c) === sig && ok(q, c) && (top < 0 || rk(c, m) > rk(top, m))) top = c;
+        if (top >= 0 && cap[q] > 0) { hands[q].push(top); cap[q]--; cards.splice(cards.indexOf(top), 1); }
+      }
+      for (const c of cards) {
+        const opts = elig.get(c).filter(q => cap[q] > 0);
+        if (!opts.length) { fail = true; break; }
+        let tot = 0; for (const q of opts) tot += cap[q];
+        let x = rnd() * tot, pick = opts[opts.length - 1];
+        for (const q of opts) { x -= cap[q]; if (x < 0) { pick = q; break; } }
+        hands[pick].push(c); cap[pick]--;
+      }
+      if (!fail) return hands;
+    }
+    // secours : sans contraintes
+    const hands = [[], [], [], []]; hands[me] = g.hands[me].slice();
+    const cards = shuffle(unseen.slice(), rnd); let i = 0;
+    for (let q = 0; q < 4; q++) if (q !== me) for (let k = 0; k < g.sizes[q]; k++) hands[q].push(cards[i++]);
+    return hands;
+  }
+
+  // IA experte : Monte-Carlo à information parfaite déterminisée
+  function expertMove(g, me, samples = 40, rnd = Math.random) {
+    const lm = legal(g.hands[me], g.trick, g.mode);
+    if (lm.length === 1) return lm[0];
+    const base = greedy(lm, imperfectCtx(g, me));
+    const score = new Map(lm.map(c => [c, 0]));
+    const team = me % 2;
+    for (let s = 0; s < samples; s++) {
+      const hands = sampleWorld(g, me, rnd);
+      for (const c of lm) {
+        const st = simState(hands, g.mode, g.decl, me, g.trick, g.tp, g.trickNo, g.pts, g.tricks);
+        simPlay(st, c);
+        const r = simFinish(st);
+        score.set(c, score.get(c) + r[team] - r[1 - team]);
+      }
+    }
+    score.set(base, score.get(base) + samples * 0.5); // léger biais vers le coup « naturel »
+    return maxBy(lm, c => score.get(c));
+  }
+  function relaxedMove(g, me) {
+    const lm = legal(g.hands[me], g.trick, g.mode);
+    return greedy(lm, imperfectCtx(g, me));
+  }
+
+  // Choix de l'atout : simulation de chaque mode autorisé ; mult = multiplicateur par mode, nModes = 4 (couleurs) ou 6
+  function evalModes(hand, me, leader, samples, mult, nModes, rnd = Math.random) {
+    const others = []; const mine = new Set(hand);
+    for (let c = 0; c < 36; c++) if (!mine.has(c)) others.push(c);
+    const val = Array(nModes).fill(0);
+    for (let s = 0; s < samples; s++) {
+      const d = shuffle(others.slice(), rnd); let i = 0;
+      const hands = [[], [], [], []];
+      for (let q = 0; q < 4; q++) hands[q] = q === me ? hand.slice() : d.slice(i, i += 9);
+      for (let m = 0; m < nModes; m++) {
+        const st = simState(hands, m, me % 2, leader);
+        const r = simFinish(st);
+        val[m] += r[me % 2] - r[1 - me % 2];
+      }
+    }
+    for (let m = 0; m < nModes; m++) {
+      val[m] /= samples;
+      if (m < 4 && hand.includes(m * 9 + 7) && hand.includes(m * 9 + 6)) val[m] += 20;
+      val[m] *= mult[m];
+    }
+    return val;
+  }
+  function chooseMode(hand, me, leader, canChibre, samples, mult, nModes, rnd = Math.random) {
+    const val = evalModes(hand, me, leader, samples, mult, nModes, rnd);
+    let best = 0; for (let m = 1; m < nModes; m++) if (val[m] > val[best]) best = m;
+    const raw = val[best] / mult[best];
+    if (canChibre && raw < (nModes === 4 ? CHIBRE_THRESHOLD4 : CHIBRE_THRESHOLD)) return { mode: 'chibre', val };
+    return { mode: best, val };
+  }
+  let CHIBRE_THRESHOLD = 40, CHIBRE_THRESHOLD4 = 40;
+
+  return {
+    S, R, pts, isT, rk, str, winnerIdx, legal, findWeis, resolveWeis, stockHolder, shuffle, deal,
+    greedy, perfectCtx, imperfectCtx, simState, simPlay, simFinish, sampleWorld, expertMove, relaxedMove,
+    evalModes, chooseMode, CFG, signalOf, applySignal, strongSuit, PAIR, setThreshold: t => CHIBRE_THRESHOLD = t,
+  };
+})();
+if (typeof module !== 'undefined') module.exports = J;
+
+</script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const NAMES = ['Vous', 'Pierre-André', 'Monique', 'Jean-Daniel'];
+const INIT = ['', 'PA', 'M', 'JD'];
+const SUITN = ['pique', 'cœur', 'carreau', 'trèfle'];
+const RL = ['6', '7', '8', '9', '10', 'V', 'D', 'R', 'A'];
+const RN = ['six', 'sept', 'huit', 'neuf', 'dix', 'valet', 'dame', 'roi', 'as'];
+const FOURN = { 3: 'neuf', 4: 'dix', 5: 'valets', 6: 'dames', 7: 'rois', 8: 'as' };
+const SPEED = { lent: { ai: 1000, trick: 1450 }, normal: { ai: 620, trick: 950 }, rapide: { ai: 280, trick: 520 } };
+const OFF = [[0, 190], [180, 0], [0, -170], [-180, 0]];
+const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('jass:' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('jass:' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const settings = Object.assign({ target: 1000, modes: 'all', pique: false, signals: 'off', level: 'expert', speed: 'normal' }, store.get('settings', {}));
+delete settings['mult'];
+const multOf = m => settings.pique && m === 0 ? 2 : 1;
+const multArr = () => [0, 1, 2, 3, 4, 5].map(multOf);
+const nModes = () => settings.modes === 'all' ? 6 : 4;
+const stats = Object.assign({ won: 0, lost: 0 }, store.get('stats', {}));
+const sp = () => SPEED[settings.speed] || SPEED.normal;
+
+let G = null, token = 0;
+const wait = ms => {
+  const t = token;
+  return new Promise(res => {
+    const tick = () => { if (t !== token) return; if (document.getElementById('modal').classList.contains('on')) return setTimeout(tick, 200); res(); };
+    setTimeout(tick, ms);
+  });
+};
+
+// ---------- Rendu des cartes ----------
+const isRed = c => J.S(c) === 1 || J.S(c) === 2;
+const sv = (s, cls = '') => `<svg class="sv ${cls}" viewBox="0 0 100 100" aria-hidden="true"><use href="#suit${s}"/></svg>`;
+const svC = s => `<span class="${s === 1 || s === 2 ? 'r' : ''}">${sv(s)}</span>`;
+const cardShort = c => { const r = J.R(c), su = SUITN[J.S(c)]; return r <= 4 ? `le ${RL[r]} de ${su}` : r === 5 ? `le valet de ${su}` : r === 6 ? `la dame de ${su}` : r === 7 ? `le roi de ${su}` : `l’as de ${su}`; };
+const cardName = c => { const n = RN[J.R(c)]; return n[0].toUpperCase() + n.slice(1) + ' de ' + SUITN[J.S(c)]; };
+const modeIcon = m => m < 4 ? sv(m) : `<span class="mi">${m === 4 ? 'A' : '6'}<small>${m === 4 ? '↓' : '↑'}</small></span>`;
+const modeLabel = m => m < 4 ? 'Atout ' + SUITN[m] : (m === 4 ? 'Obenabe' : 'Undenufe');
+const who = p => p === 0 ? 'vous' : NAMES[p];
+const Who = p => p === 0 ? 'Vous' : NAMES[p];
+
+function cardEl(c, m, tag = 'div') {
+  const el = document.createElement(tag);
+  const r = J.R(c), s = J.S(c), trump = m != null && J.isT(c, m);
+  el.className = 'card ' + (isRed(c) ? 'red' : 'blk') + (trump ? ' trump' : '');
+  let t = ''; if (trump && r === 5) t = 'Bour'; else if (trump && r === 3) t = 'Nell';
+  const face = r >= 5 && r <= 7;
+  el.innerHTML = `<span class="ix"><b>${RL[r]}</b>${sv(s)}</span><span class="ctr">${face ? `<b class="fl">${RL[r]}</b>` : ''}${sv(s, 'big')}</span>${t ? `<span class="tag">${t}</span>` : ''}`;
+  el.dataset.c = c;
+  if (tag === 'button') el.setAttribute('aria-label', cardName(c) + (t ? ' (' + t + ')' : ''));
+  return el;
+}
+
+function sortHand(h, m) {
+  const base = [0, 1, 3, 2];
+  const order = m != null && m < 4 ? [m, ...base.filter(s => s !== m)] : base;
+  const mm = m == null ? 4 : m;
+  return h.slice().sort((a, b) => order.indexOf(J.S(a)) - order.indexOf(J.S(b)) || J.rk(b, mm) - J.rk(a, mm));
+}
+
+// ---------- Mise en page ----------
+function layout() {
+  const hz = $('#hand');
+  const W = Math.min(hz.clientWidth || window.innerWidth, 740) - 8;
+  const H = window.innerHeight;
+  let cw = Math.max(48, Math.min(80, W / 5.3, H / 9.2));
+  const n = Math.max(1, G && G.hands ? G.hands[0].length : 9);
+  const step = n > 1 ? Math.min(cw * 0.8, (W - cw) / (n - 1)) : cw;
+  document.documentElement.style.setProperty('--cw', cw.toFixed(1) + 'px');
+  document.documentElement.style.setProperty('--step', step.toFixed(1) + 'px');
+  const mid = document.querySelector('.mid');
+  const avail = mid ? mid.clientHeight : 220;
+  const tw = Math.max(40, Math.min(66, cw * 0.92, (avail - 6) / (1.45 * 1.95), (W - 160) / 2.45));
+  document.documentElement.style.setProperty('--tw', tw.toFixed(1) + 'px');
+}
+window.addEventListener('resize', () => { layout(); });
+
+// ---------- Rendu ----------
+function initSeats() {
+  for (const p of [1, 2, 3]) {
+    $('#seat' + p).innerHTML = `<div class="av" aria-hidden="true">${INIT[p]}</div><div class="nm">${NAMES[p]}<small>${p === 2 ? 'partenaire' : 'adversaire'}</small></div><div class="backs"></div><div class="bub"></div>`;
+  }
+}
+function renderSeats() {
+  for (const p of [1, 2, 3]) {
+    const el = $('#seat' + p);
+    const n = G && G.sizes ? G.sizes[p] : 9;
+    el.classList.toggle('active', !!G && G.active === p);
+    const b = el.querySelector('.backs');
+    if (b.childElementCount !== n) { b.innerHTML = '<i></i>'.repeat(n); b.setAttribute('aria-label', n + ' cartes'); }
+  }
+}
+function renderSlate() {
+  const s = G ? G.score : [0, 0];
+  $('#sc0').textContent = s[0]; $('#sc1').textContent = s[1];
+  $('#pb0').style.width = Math.min(100, s[0] / settings.target * 100) + '%';
+  $('#pb1').style.width = Math.min(100, s[1] / settings.target * 100) + '%';
+  $('#metaR').textContent = 'Objectif ' + settings.target;
+  if (G && G.mode != null) $('#metaL').textContent = `Donne ${G.handNo + 1} : ${G.pts[0]} à ${G.pts[1]}`;
+  else if (G) $('#metaL').textContent = `Donne ${G.handNo + 1}`;
+}
+function renderMode() {
+  const el = $('#modechip');
+  if (!G || G.mode == null) { el.innerHTML = ''; return; }
+  const m = G.mode, cls = m < 4 ? (m === 1 || m === 2 ? 'r' : 'k') : '';
+  const by = `choisi par ${who(G.declBy)}` + (G.chibredBy != null ? ' après chibre' : '');
+  const mult = multOf(m) > 1 ? ` ×${multOf(m)}` : '';
+  el.innerHTML = `<span class="ico ${cls}">${modeIcon(m)}</span><span class="txt">${modeLabel(m)}${mult}<small>${by}</small></span>`;
+}
+function renderHand(dealAnim = false) {
+  const hz = $('#hand');
+  hz.innerHTML = '';
+  if (!G) return;
+  const myTurn = !!G.legalSet;
+  hz.classList.toggle('myturn', myTurn);
+  $('#handzone').classList.toggle('active', myTurn);
+  const cards = sortHand(G.hands[0], G.mode);
+  cards.forEach((c, i) => {
+    const el = cardEl(c, G.mode, 'button');
+    if (myTurn) el.classList.add(G.legalSet.has(c) ? 'ok' : 'no');
+    el.addEventListener('click', () => onCard(c, el));
+    hz.appendChild(el);
+    if (dealAnim && !reduce) el.animate([{ transform: 'translateY(-45vh) rotate(-10deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 430, delay: i * 55, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+  });
+  layout();
+}
+function setActive(p) { if (G) G.active = p; renderSeats(); }
+function hint(t) { $('#hint').textContent = t; }
+
+let toastTimer = null;
+function toast(html, ms = 2600) {
+  const el = $('#toast'); el.innerHTML = html; el.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), ms);
+}
+function bubble(p, html, ms = 1700) {
+  const el = p === 0 ? $('#bub0') : $('#seat' + p + ' .bub');
+  if (!el) return;
+  el.innerHTML = html; el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), ms);
+}
+
+// ---------- Pli ----------
+function placeTrick(p, c) {
+  const slot = document.querySelector('#trick .s' + p);
+  slot.innerHTML = ''; slot.style.zIndex = G.trick.length;
+  const el = cardEl(c, G.mode); slot.appendChild(el);
+  if (!reduce) { const [dx, dy] = OFF[p]; el.animate([{ transform: `translate(${dx}px,${dy}px) scale(.92)`, opacity: .2 }, { transform: 'none', opacity: 1 }], { duration: 270, easing: 'cubic-bezier(.2,.7,.2,1)' }); }
+}
+async function collectTrick(w) {
+  const els = [...document.querySelectorAll('#trick .card')];
+  if (!reduce) {
+    const [dx, dy] = OFF[w];
+    await Promise.all(els.map(el => el.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx * .75}px,${dy * .75}px) scale(.5)`, opacity: 0 }], { duration: 340, easing: 'ease-in', fill: 'forwards' }).finished.catch(() => {})));
+  }
+  document.querySelectorAll('#trick .slot').forEach(s => s.innerHTML = '');
+}
+function clearTrick() { document.querySelectorAll('#trick .slot').forEach(s => s.innerHTML = ''); }
+
+// ---------- Déroulement ----------
+function newGame() {
+  token++;
+  closeModal(); $('#choose').classList.remove('on');
+  G = { score: [0, 0], history: [], handNo: 0, chooser: -1 };
+  startHand();
+}
+
+async function startHand() {
+  const hands = J.deal();
+  const chooser = G.handNo === 0 ? hands.findIndex(h => h.includes(19)) : (G.chooser + 1) % 4;
+  Object.assign(G, {
+    hands, initHands: hands.map(h => h.slice()), mode: null, decl: null, declBy: null, chibredBy: null,
+    trick: [], tp: [], played: new Set(), voids: [0, 1, 2, 3].map(() => [false, false, false, false]),
+    sizes: [9, 9, 9, 9], trickNo: 0, pts: [0, 0], tricks: [0, 0], next: chooser, chooser,
+    lastTrick: null, weis: null, stock: -1, stockSeen: 0, legalSet: null, active: -1,
+    signals: [-1, -1, -1, -1], signalDone: [false, false, false, false],
+  });
+  clearTrick(); $('#lastBtn').disabled = true;
+  renderSlate(); renderMode(); renderSeats(); renderHand(true);
+  if (G.handNo === 0) toast(chooser === 0 ? 'Vous avez le 7 de carreau : vous choisissez l’atout.' : `${NAMES[chooser]} a le 7 de carreau et choisit l’atout.`, 3000);
+  await wait(reduce ? 200 : 900);
+  chooseTrump(chooser, true);
+}
+
+async function chooseTrump(p, canChibre) {
+  setActive(p);
+  let res;
+  if (p === 0) res = await askHuman(canChibre);
+  else {
+    await wait(sp().ai + 350);
+    res = J.chooseMode(G.hands[p], p, G.chooser, canChibre, settings.level === 'expert' ? 24 : 6, multArr(), nModes()).mode;
+  }
+  if (res === 'chibre') {
+    G.chibredBy = p;
+    bubble(p, 'Chibre !');
+    await wait(800);
+    return chooseTrump((p + 2) % 4, false);
+  }
+  G.mode = res; G.declBy = p; G.decl = p % 2;
+  bubble(p, (res < 4 ? svC(res) + ' ' : '') + modeLabel(res), 1900);
+  startPlay();
+}
+
+function askHuman(canChibre) {
+  return new Promise(resolve => {
+    const box = $('#choose');
+    const title = canChibre ? 'Choisissez l’atout' : `${NAMES[2]} a chibré : à vous de choisir`;
+    const multTxt = m => multOf(m) > 1 ? `<small>compte double</small>` : '';
+    const sub = { 4: 'l’As commande', 5: 'le 6 commande' };
+    const all = nModes() === 6;
+    let html = `<h3>${title}</h3><div class="opts${all ? '' : ' four'}">`;
+    for (const m of [0, 1, 2, 3]) html += `<button class="opt ${m === 1 || m === 2 ? 'r' : ''}" data-m="${m}">${sv(m)}<b>${SUITN[m][0].toUpperCase() + SUITN[m].slice(1)}</b>${multTxt(m)}</button>`;
+    if (all) for (const m of [4, 5]) html += `<button class="opt" data-m="${m}">${modeIcon(m)}<b>${modeLabel(m)}</b><small>${sub[m]}</small></button>`;
+    html += `</div>`;
+    if (canChibre) html += `<button class="chibre" data-m="chibre">Chibrer <small>(${NAMES[2]} choisit)</small></button>`;
+    html += `<button class="advice" id="adviceBtn">Demander conseil</button>`;
+    box.innerHTML = html; box.classList.add('on');
+    box.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => {
+      box.classList.remove('on');
+      const v = b.dataset.m; resolve(v === 'chibre' ? 'chibre' : +v);
+    }));
+    $('#adviceBtn').addEventListener('click', e => {
+      e.target.textContent = 'Réflexion…';
+      setTimeout(() => {
+        const r = J.chooseMode(G.hands[0], 0, G.chooser, canChibre, 30, multArr(), nModes());
+        box.querySelectorAll('.sug').forEach(x => x.classList.remove('sug'));
+        const t = box.querySelector(`[data-m="${r.mode}"]`); if (t) t.classList.add('sug');
+        e.target.textContent = r.mode === 'chibre' ? 'Conseil : chibrer' : `Conseil : ${modeLabel(r.mode).toLowerCase()}`;
+      }, 30);
+    });
+    const first = box.querySelector('.opt'); if (first) first.focus({ preventScroll: true });
+  });
+}
+
+function startPlay() {
+  G.weis = J.resolveWeis(G.initHands, G.mode, G.chooser);
+  G.stock = J.stockHolder(G.initHands, G.mode);
+  G.next = G.chooser;
+  renderMode(); renderSlate(); renderHand();
+  loop();
+}
+
+async function loop() {
+  const t = token;
+  while (G.trickNo < 9) {
+    const p = G.next;
+    setActive(p);
+    let c;
+    if (p === 0) c = await humanTurn();
+    else {
+      await wait(sp().ai);
+      c = settings.level === 'expert' ? J.expertMove(G, p, 80) : J.relaxedMove(G, p);
+      c = J.applySignal(G, p, c, settings.signals);
+    }
+    if (t !== token) return;
+    await playCard(p, c);
+    if (t !== token) return;
+  }
+  endHand();
+}
+
+function humanTurn() {
+  return new Promise(res => {
+    G.legalSet = new Set(J.legal(G.hands[0], G.trick, G.mode));
+    G.humanResolve = c => { G.humanResolve = null; G.legalSet = null; res(c); };
+    const L = G.trick.length ? J.S(G.trick[0]) : -1;
+    const discarding = L >= 0 && !G.hands[0].some(x => J.S(x) === L);
+    hint(settings.signals !== 'off' && discarding && !G.signalDone[0] ? 'Votre premier petit écart sert de signal à Monique' : 'À vous de jouer');
+    renderHand();
+  });
+}
+
+function whyIllegal(c) {
+  const m = G.mode, L = J.S(G.trick[0]);
+  if (m < 4 && L === m) return 'Il faut servir atout. Seul le Bour n’est jamais obligé.';
+  if (G.hands[0].some(x => J.S(x) === L) && !J.isT(c, m)) return `Il faut servir ${SUITN[L]}${m < 4 ? ' ou couper' : ''}.`;
+  return 'Interdit de sous-couper tant que vous avez autre chose.';
+}
+
+function onCard(c, el) {
+  if (!G || !G.humanResolve) { if (G && G.mode == null) toast('Choisissez d’abord l’atout.'); return; }
+  if (!G.legalSet.has(c)) {
+    toast(whyIllegal(c));
+    if (!reduce) el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 220 });
+    return;
+  }
+  G.humanResolve(c);
+}
+
+function weisDesc(w) {
+  if (w.type === 'seq') return `${w.len} cartes à la suite à ${SUITN[w.suit]}`;
+  return w.rank === 8 ? 'carré d’as' : `carré de ${FOURN[w.rank]}`;
+}
+
+async function playCard(p, c) {
+  const m = G.mode, L = G.trick.length ? J.S(G.trick[0]) : -1;
+  const sig = J.signalOf(G, p, c, settings.signals);
+  if (sig >= 0) {
+    G.signals[p] = sig; G.signalDone[p] = true;
+    if (p === 2) setTimeout(() => toast(`${NAMES[2]} écarte ${cardShort(c)} : elle est bonne à ${svC(sig)} ${SUITN[sig]}.`, 3200), 350);
+    if (p === 0) setTimeout(() => toast(`Votre écart dit à ${NAMES[2]} que vous êtes bon à ${svC(sig)} ${SUITN[sig]}.`, 3200), 350);
+  }
+  if (L >= 0 && J.S(c) !== L) {
+    if (m < 4 && L === m) { if (G.voids[p][L] !== true) G.voids[p][L] = 'b'; }
+    else if (!J.isT(c, m)) G.voids[p][L] = true;
+  }
+  const h = G.hands[p]; h.splice(h.indexOf(c), 1);
+  G.played.add(c); G.sizes[p]--;
+  G.trick.push(c); G.tp.push(p);
+  if (p === 0) renderHand(); else renderSeats();
+  placeTrick(p, c);
+
+  if (G.trickNo === 0 && G.weis.per[p].length) {
+    const sum = G.weis.per[p].reduce((a, w) => a + w.pts, 0);
+    bubble(p, `J’annonce ${sum}`, 1600);
+  }
+  if (G.stock === p && m < 4 && (c === m * 9 + 6 || c === m * 9 + 7)) {
+    G.stockSeen++;
+    if (G.stockSeen === 2) bubble(p, 'Stöck !', 1500);
+  }
+
+  if (G.trick.length === 4) {
+    const wi = J.winnerIdx(G.trick, m), w = G.tp[wi];
+    let s = 0; for (const x of G.trick) s += J.pts(x, m);
+    G.trickNo++; if (G.trickNo === 9) s += 5;
+    G.pts[w % 2] += s; G.tricks[w % 2]++;
+    G.lastTrick = { cards: G.trick.slice(), tp: G.tp.slice(), winner: w, pts: s, n: G.trickNo };
+    setActive(-1);
+    const winEl = document.querySelector(`#trick .s${w} .card`); if (winEl) winEl.classList.add('win');
+    await wait(sp().trick);
+    bubble(w, `+${s}`, 900);
+    await collectTrick(w);
+    G.trick = []; G.tp = []; G.next = w;
+    $('#lastBtn').disabled = false;
+    renderSlate();
+    if (G.trickNo === 1 && G.weis.team >= 0) {
+      const t = G.weis.team;
+      const parts = [];
+      for (const q of [t, t + 2]) for (const wv of G.weis.per[q]) parts.push(`${Who(q)} : ${weisDesc(wv)} (${wv.pts})`);
+      toast(`<b>Annonces : ${t === 0 ? 'nous marquons' : 'ils marquent'} ${G.weis.total[t]}</b><br>${parts.join('<br>')}`, 3800);
+    }
+  } else {
+    G.next = (p + 1) % 4;
+    await wait(60);
+  }
+}
+
+function endHand() {
+  setActive(-1);
+  const match = [0, 0]; for (const t of [0, 1]) if (G.tricks[t] === 9) match[t] = 100;
+  const weis = G.weis.total.slice();
+  const stock = [0, 0]; if (G.stock >= 0) stock[G.stock % 2] = 20;
+  const mult = multOf(G.mode);
+  const total = [0, 1].map(t => (G.pts[t] + match[t] + weis[t] + stock[t]) * mult);
+  G.score[0] += total[0]; G.score[1] += total[1];
+  G.history.push({ n: G.handNo + 1, mode: G.mode, declBy: G.declBy, total });
+  const lastTeam = G.lastTrick ? G.lastTrick.winner % 2 : -1;
+  renderSlate();
+  const over = G.score.some(s => s >= settings.target);
+
+  const row = (lab, a, b, always) => (always || a || b) ? `<tr><td>${lab}</td><td>${a}</td><td>${b}</td></tr>` : '';
+  const der = t => lastTeam === t ? ' <small>dont 5 de der</small>' : '';
+  const m = G.mode;
+  const byTxt = G.chibredBy != null ? `${Who(G.declBy)}, après chibre de ${who(G.chibredBy)}` : `choisi par ${who(G.declBy)}`;
+  let html = `<h2>Donne ${G.handNo + 1}${match[0] ? ' : match pour nous' : match[1] ? ' : match pour eux' : ''}</h2>
+    <p class="sub">${m < 4 ? svC(m) : ''}${modeLabel(m)}, ${byTxt}</p>
+    <table class="sc"><tr><th></th><th>Nous</th><th>Eux</th></tr>
+    ${row('Plis', G.pts[0] + der(0), G.pts[1] + der(1), true)}
+    ${row('Match', match[0], match[1])}
+    ${row('Annonces', weis[0], weis[1])}
+    ${row('Stöck', stock[0], stock[1])}
+    ${mult > 1 ? `<tr><td>Multiplicateur</td><td>×${mult}</td><td>×${mult}</td></tr>` : ''}
+    <tr class="tot"><td>Cette donne</td><td>+${total[0]}</td><td>+${total[1]}</td></tr>
+    <tr class="cum"><td>Total</td><td>${G.score[0]}</td><td>${G.score[1]}</td></tr></table>`;
+  if (over) {
+    const win = G.score[0] > G.score[1] ? 0 : G.score[1] > G.score[0] ? 1 : -1;
+    if (win === 0) stats.won++; else if (win === 1) stats.lost++;
+    store.set('stats', stats);
+    const head = win === 0 ? 'Victoire' : win === 1 ? 'Défaite' : 'Égalité';
+    const line = win === 0 ? `Monique et vous atteignez ${settings.target} les premiers.` : win === 1 ? `Jean-Daniel et Pierre-André passent ${settings.target} avant vous.` : 'Les deux équipes à égalité.';
+    html = `<h2>${head}</h2><p>${line}</p>` + html.replace('<h2>', '<h3>').replace('</h2>', '</h3>') +
+      `<p class="stats">Parties gagnées : ${stats.won}, perdues : ${stats.lost}</p><button class="btn primary" id="nextBtn">Nouvelle partie</button>`;
+  } else html += `<button class="btn primary" id="nextBtn">Donne suivante</button>`;
+  setTimeout(() => {
+    openModal(html);
+    $('#nextBtn').addEventListener('click', () => {
+      closeModal();
+      if (over) newGame(); else { G.handNo++; startHand(); }
+    });
+  }, reduce ? 100 : 500);
+}
+
+// ---------- Fenêtres ----------
+function openModal(html, focus = true) { $('#panel').innerHTML = html; $('#modal').classList.add('on'); $('#panel').scrollTop = 0; const b = $('#panel .btn.primary') || $('#panel .btn'); if (b && focus) b.focus({ preventScroll: true }); }
+function closeModal() { $('#modal').classList.remove('on'); }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal' && G && !$('#nextBtn')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modal').classList.contains('on') && G && !$('#nextBtn')) closeModal(); });
+
+function segHTML(key, opts) {
+  return `<div class="seg" data-key="${key}">${opts.map(([v, l]) => `<button aria-pressed="${String(settings[key]) === String(v)}" data-v="${v}">${l}</button>`).join('')}</div>`;
+}
+function bindSegs() {
+  document.querySelectorAll('.seg').forEach(seg => seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const k = seg.dataset.key; let v = b.dataset.v;
+    if (k === 'target') v = +v; else if (v === 'true' || v === 'false') v = v === 'true';
+    settings[k] = v; store.set('settings', settings);
+    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderSlate(); renderMode();
+  })));
+}
+const variantHTML = () => `
+  <h3>Atouts possibles</h3>${segHTML('modes', [['suits', 'Couleurs seulement'], ['all', 'Avec haut et bas']])}
+  <h3>Atout pique</h3>${segHTML('pique', [[false, 'Compte simple'], [true, 'Compte double']])}
+  <h3>Signaux au partenaire</h3>${segHTML('signals', [['off', 'Aucun'], ['direct', 'Directs'], ['indirect', 'Indirects']])}
+  <p class="note">Le premier petit écart de chacun sert de signal. Direct : un 6 de cœur veut dire « je suis bon à cœur ». Indirect : il veut dire « je suis bon à carreau », l’autre couleur de même teinte.</p>`;
+const settingsHTML = () => `
+  <p class="note">Les variantes s’appliquent dès la prochaine donne.</p>
+  ${variantHTML()}
+  <h3>Objectif</h3>${segHTML('target', [[1000, '1000'], [1500, '1500'], [2500, '2500']])}
+  <h3>Adversaires et partenaire</h3>${segHTML('level', [['relax', 'Détendus'], ['expert', 'Coriaces']])}
+  <p class="note">Coriaces : chaque coup est choisi en simulant des dizaines de donnes possibles.</p>
+  <h3>Vitesse</h3>${segHTML('speed', [['lent', 'Lente'], ['normal', 'Normale'], ['rapide', 'Rapide']])}`;
+
+const rulesHTML = () => `<div class="rules">
+  <h2>Règles du Chibre</h2>
+  <p>Quatre joueurs, deux équipes : vous et ${NAMES[2]} en face, contre ${NAMES[3]} et ${NAMES[1]}. On joue avec 36 cartes, neuf chacun, dans le sens inverse des aiguilles d’une montre.</p>
+  <h3>Choisir l’atout</h3>
+  <p>À chaque donne, un joueur choisit l’atout, à tour de rôle. Il peut aussi chibrer : son partenaire choisit alors à sa place, mais c’est toujours le premier qui entame. À la première donne, celui qui a le 7 de carreau commence.</p>
+  <p>Selon la variante choisie, on peut aussi jouer Obenabe (sans atout, l’As commande) ou Undenufe (sans atout, le 6 commande).</p>
+  <h3>Valeur des cartes</h3>
+  <p>À l’atout, de la plus forte à la plus faible :</p>
+  <div class="vals"><span class="h">V</span><span class="h">9</span><span class="h">A</span><span class="h">R</span><span class="h">D</span><span class="h">10</span><span class="h">8</span><span class="h">7</span><span class="h">6</span>
+  <span>20</span><span>14</span><span>11</span><span>4</span><span>3</span><span>10</span><span>0</span><span>0</span><span>0</span></div>
+  <p>Le Valet d’atout s’appelle le Bour, le 9 d’atout le Nell. Dans les autres couleurs : As 11, Roi 4, Dame 3, Valet 2, 10 vaut 10. En Obenabe et Undenufe, les 8 valent 8 points ; en Undenufe, le 6 vaut 11 et l’As 0.</p>
+  <h3>Comment jouer</h3>
+  <ul>
+    <li>Il faut servir la couleur demandée si on le peut, mais on a toujours le droit de couper.</li>
+    <li>On ne peut pas sous-couper (jouer un atout plus faible que celui déjà posé), sauf si on n’a plus que de l’atout.</li>
+    <li>Le Bour n’est jamais obligé : si c’est votre seul atout, vous pouvez le garder.</li>
+    <li>Le dernier pli rapporte 5 points de plus (le cinq de der). Une donne vaut 157 points ; faire tous les plis, c’est le match, qui vaut 257.</li>
+  </ul>
+  <h3>Annonces</h3>
+  <p>Au premier pli, les annonces sont faites automatiquement : trois cartes qui se suivent dans la même couleur valent 20, quatre 50, cinq 100, puis 50 de plus par carte. Un carré de Valets vaut 200, de 9 150, d’As, Rois, Dames ou 10 100. Seule l’équipe qui a la meilleure annonce marque ses annonces.</p>
+  <p>Le Roi et la Dame d’atout dans la même main donnent le Stöck : 20 points, toujours comptés.</p>
+  <h3>Variantes</h3>
+  <p>Haut et bas : si l’option est active, on peut aussi choisir Obenabe ou Undenufe. Sinon, seules les quatre couleurs peuvent être atout.</p>
+  <p>Pique double : quand pique est atout, tous les points de la donne (plis, annonces, Stöck) comptent double.</p>
+  <p>Signaux : le premier petit écart de chaque joueur, c’est-à-dire une des quatre cartes les plus faibles d’une couleur posée faute de pouvoir servir, renseigne son partenaire. En direct, un 6 de cœur veut dire « je suis bon à cœur » ; en indirect, il veut dire « je suis bon à carreau », l’autre couleur de même teinte. Le partenaire en tient compte quand il doit entamer.</p>
+  <h3>Pour gagner</h3>
+  <p>La première équipe qui atteint l’objectif (${settings.target} points) à la fin d’une donne gagne la partie.</p>
+</div>`;
+
+function historyHTML() {
+  if (!G || !G.history.length) return `<h2>Historique</h2><p>Aucune donne terminée pour l’instant.</p>`;
+  let r = `<h2>Historique</h2><table class="sc"><tr><th>Donne</th><th>Atout</th><th>Nous</th><th>Eux</th></tr>`;
+  for (const h of G.history) r += `<tr><td>${h.n}</td><td>${h.mode < 4 ? svC(h.mode) + ' ' + SUITN[h.mode] : modeLabel(h.mode)}</td><td>+${h.total[0]}</td><td>+${h.total[1]}</td></tr>`;
+  r += `<tr class="tot"><td>Total</td><td></td><td>${G.score[0]}</td><td>${G.score[1]}</td></tr></table>`;
+  return r;
+}
+
+function menu() {
+  openModal(`<h2>Menu</h2>
+    <button class="btn second" id="mResume">Reprendre la partie</button>
+    <button class="btn second" id="mHist">Historique des donnes</button>
+    <button class="btn second" id="mRules">Règles</button>
+    <button class="btn second" id="mSet">Réglages</button>
+    <button class="btn primary" id="mNew">Nouvelle partie</button>
+    <p class="stats">Parties gagnées : ${stats.won}, perdues : ${stats.lost}</p>`);
+  $('#mResume').onclick = closeModal;
+  $('#mHist').onclick = () => { openModal(historyHTML() + `<button class="btn second" id="back">Retour</button>`); $('#back').onclick = menu; };
+  $('#mRules').onclick = () => { openModal(rulesHTML() + `<button class="btn second" id="back">Retour</button>`); $('#back').onclick = menu; };
+  $('#mSet').onclick = () => { openModal(`<h2>Réglages</h2>${settingsHTML()}<button class="btn second" id="back">Retour</button>`); bindSegs(); $('#back').onclick = menu; };
+  $('#mNew').onclick = () => {
+    if (G && (G.handNo > 0 || G.trickNo > 0)) {
+      openModal(`<h2>Nouvelle partie ?</h2><p>La partie en cours (${G.score[0]} à ${G.score[1]}) sera abandonnée.</p><button class="btn primary" id="yes">Recommencer</button><button class="btn second" id="back">Retour</button>`);
+      $('#yes').onclick = newGame; $('#back').onclick = menu;
+    } else newGame();
+  };
+}
+$('#menuBtn').addEventListener('click', () => { if (!G) return intro(); menu(); });
+
+$('#lastBtn').addEventListener('click', () => {
+  if (!G || !G.lastTrick) return;
+  const L = G.lastTrick;
+  const figs = L.cards.map((c, i) => {
+    const p = L.tp[i]; const el = cardEl(c, G.mode);
+    return `<figure class="${p === L.winner ? 'w' : ''}">${el.outerHTML}<figcaption>${Who(p)}</figcaption></figure>`;
+  }).join('');
+  openModal(`<h2>Pli ${L.n}</h2><p class="sub">Remporté par ${who(L.winner)}, ${L.pts} points</p><div class="mini">${figs}</div><button class="btn second" id="back">Fermer</button>`);
+  $('#back').onclick = closeModal;
+});
+
+function intro() {
+  openModal(`<div class="intro"><div class="hero"><span class="cross" aria-hidden="true"></span>Jass</div>
+    <p>Le Chibre à quatre. Vous jouez avec ${NAMES[2]}, assise en face, contre ${NAMES[3]} et ${NAMES[1]}.</p>
+    ${variantHTML()}
+    <h3>Objectif</h3>${segHTML('target', [[1000, '1000'], [1500, '1500'], [2500, '2500']])}
+    <h3>Adversaires</h3>${segHTML('level', [['relax', 'Détendus'], ['expert', 'Coriaces']])}
+    <button class="btn primary" id="go">Distribuer les cartes</button>
+    <button class="linkbtn" id="rulesLink">Lire les règles d’abord</button>
+    ${stats.won + stats.lost ? `<p class="stats">Parties gagnées : ${stats.won}, perdues : ${stats.lost}</p>` : ''}</div>`, false);
+  bindSegs();
+  $('#go').onclick = newGame;
+  $('#rulesLink').onclick = () => { openModal(rulesHTML() + `<button class="btn primary" id="go2">Distribuer les cartes</button>`); $('#go2').onclick = newGame; };
+}
+
+// ---------- Démarrage ----------
+initSeats(); renderSeats(); renderSlate(); layout();
+document.fonts && document.fonts.ready.then(layout);
+intro();
+})();
+</script>
+</body>
+</html>
